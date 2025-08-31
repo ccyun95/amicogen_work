@@ -2,20 +2,8 @@ name: Amicogen Daily KRX (1y, 18:10 KST, skip holidays)
 
 on:
   schedule:
-    - cron: "10 9 * * 1-5"   # 09:10 UTC = 18:10 KST (Mon-Fri)
-  workflow_dispatch:
-    inputs:
-      force:
-        description: "Run even if today is NOT a trading day"
-        required: false
-        default: "false"
-      use_prev_trading_day:
-        description: "When not trading day, use previous trading day"
-        required: false
-        default: "false"
-
-permissions:
-  contents: write
+    - cron: "10 9 * * 1-5"   # 09:10 UTC → 18:10 KST (Mon-Fri)
+  workflow_dispatch: {}
 
 jobs:
   run:
@@ -36,7 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 휴장일/거래없음 체크
+      # === 휴장일/거래없음 사전 체크 ===
       - name: Precheck trading day
         id: precheck
         env:
@@ -44,63 +32,32 @@ jobs:
         run: |
           python -m src.precheck_trading_day
 
-      # 실행 결정 로직: force == true 이면 실행
-      - name: Decide run
-        id: decide
-        run: |
-          FORCE="${{ github.event.inputs.force }}"
-          PREV="${{ github.event.inputs.use_prev_trading_day }}"
-          IS_TRADE="${{ steps.precheck.outputs.is_trading_day }}"
-          echo "force=${FORCE}"
-          echo "use_prev_trading_day=${PREV}"
-          echo "is_trading_day=${IS_TRADE}"
-          if [ "${FORCE}" = "true" ]; then
-            echo "do_run=true" >> "$GITHUB_OUTPUT"
-            echo "use_prev=false" >> "$GITHUB_OUTPUT"
-          else
-            if [ "${IS_TRADE}" = "true" ]; then
-              echo "do_run=true" >> "$GITHUB_OUTPUT"
-              echo "use_prev=false" >> "$GITHUB_OUTPUT"
-            else
-              if [ "${PREV}" = "true" ]; then
-                echo "do_run=true" >> "$GITHUB_OUTPUT"
-                echo "use_prev=true" >> "$GITHUB_OUTPUT"
-              else
-                echo "do_run=false" >> "$GITHUB_OUTPUT"
-                echo "use_prev=false" >> "$GITHUB_OUTPUT"
-              fi
-            fi
-          fi
-
-      # 전 영업일 모드일 때 사용할 환경변수(옵션) 처리
-      - name: Run latest_trading_volume.csv
-        if: steps.decide.outputs.do_run == 'true'
+      # === 거래일에만 1년치 CSV 2종 생성 ===
+      - name: Build latest_trading_volume.csv
+        if: steps.precheck.outputs.is_trading_day == 'true'
         env:
           TICKER: "092040"
           OUTPUT_DIR: "data"
           INCLUDE_ETC_CORP: "0"
-          USE_PREV_TRADING_DAY: "${{ steps.decide.outputs.use_prev }}"
         run: |
           python -m src.run_trading_volume
 
-      - name: Run latest_market_ohlcv.csv
-        if: steps.decide.outputs.do_run == 'true'
+      - name: Build latest_market_ohlcv.csv
+        if: steps.precheck.outputs.is_trading_day == 'true'
         env:
           TICKER: "092040"
           OUTPUT_DIR: "data"
-          USE_PREV_TRADING_DAY: "${{ steps.decide.outputs.use_prev }}"
         run: |
           python -m src.run_market_ohlcv
 
+      # === 고정 URL 확보(권장): data/*.csv 커밋 ===
       - name: Commit CSV to repo
-        if: steps.decide.outputs.do_run == 'true'
+        if: steps.precheck.outputs.is_trading_day == 'true'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
           if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add data/latest_trading_volume.csv data/latest_market_ohlcv.csv
             git commit -m "update latest CSVs $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
             git push
-          else
-            echo "No changes to commit."
           fi
