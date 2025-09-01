@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from pykrx import stock
-from common import kst_dates_1y, normalize_numeric
+from src.common import kst_dates_1y, normalize_numeric
 
 TICKER = os.getenv("TICKER", "092040")
 OUTPUT_DIR = os.getenv("OUTPUT_DIR", "data")
@@ -42,3 +42,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
