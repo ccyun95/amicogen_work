@@ -34,12 +34,17 @@ def main():
     # 최신이 위로
     df = df.sort_values("일자", ascending=False)
 
-    ordered = [c for c in ["일자","시가","고가","저가","종가","거래량","거래대금","등락률"] if c in df.columns]
+    ordered = [c for c in ["일자","시가","고가","저가","종가","거래량","등락률"] if c in df.columns]
     df = df[ordered]
 
-    df.to_csv(os.path.join(OUTPUT_DIR, "latest_market_ohlcv.csv"),
-              index=False, encoding="utf-8-sig")
+    df.to_csv(
+        os.path.join(OUTPUT_DIR, "latest_market_ohlcv.csv"),
+        index=False,
+        encoding="utf-8",          # BOM 제거
+        lineterminator="\n"        # LF 고정
+    )
 
 if __name__ == "__main__":
     main()
+
 
