@@ -45,9 +45,14 @@ def main():
     ordered = ["일자", "기관 합계", "기타법인", "개인", "외국인 합계", "전체"]
     df = df[ordered]
 
-    df.to_csv(os.path.join(OUTPUT_DIR, "latest_trading_volume.csv"),
-              index=False, encoding="utf-8-sig")
+    df.to_csv(
+        os.path.join(OUTPUT_DIR, "latest_trading_volume.csv"),
+        index=False,
+        encoding="utf-8",          # BOM 제거
+        lineterminator="\n"        # LF 고정
+    )
 
 if __name__ == "__main__":
     main()
+
 
