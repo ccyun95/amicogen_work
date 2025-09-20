@@ -105,7 +105,7 @@ def main():
             out[c] = out[c].fillna(0)
 
     # 6) 저장 (UTF-8, LF, 최신일자→과거 정렬을 원하시면 ascending=False)
-    out = out.sort_values("일자", ascending=True)
+    out = out.sort_values("일자", ascending=False)
     outfile = os.path.join(OUTPUT_DIR, OUTFILE)
     out.to_csv(outfile, index=False, encoding="utf-8", lineterminator="\n")
     print(f"[OK] saved: {outfile}")
@@ -118,3 +118,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"[ERROR] {e}", file=sys.stderr)
         sys.exit(1)
+
