@@ -107,7 +107,7 @@ def main():
     # 6) 저장 (UTF-8, LF, 최신일자→과거 정렬을 원하시면 ascending=False)
     out = out.sort_values("일자", ascending=False)
     outfile = os.path.join(OUTPUT_DIR, OUTFILE)
-    out.to_csv(outfile, index=False, encoding="utf-8", line_terminator="\n")
+    out.to_csv(outfile, index=False, encoding="utf-8", lineterminator="\n")
     print(f"[OK] saved: {outfile}")
     print(f"cols = {list(out.columns)}")
     print(f"rows = {len(out)} (from {out['일자'].min()} to {out['일자'].max()})")
@@ -118,5 +118,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"[ERROR] {e}", file=sys.stderr)
         sys.exit(1)
+
 
 
